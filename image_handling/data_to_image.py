@@ -24,6 +24,8 @@ async def data_to_image(data_path=DATA_PATH, save_path=DATA_TO_IMAGE_PATH) -> No
     global heatmap
     heatmap = cv2.applyColorMap(matrix_norm, cv2.COLORMAP_JET)
 
+    cv2.imwrite(save_path, heatmap)
+
     cv2.namedWindow("Processed Image")
     cv2.setMouseCallback("Processed Image", update_temp_on_hover)
 

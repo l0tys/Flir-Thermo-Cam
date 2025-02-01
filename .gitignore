@@ -60,5 +60,5 @@ docs/_build/
 # PyBuilder
 target/
 
-data/test_data/
-data/test_images/
+data/raw_data/
+data/images/
