@@ -4,31 +4,51 @@ import asyncio
 import PySpin
 
 # File imports
-from image_handling import capture_data, data_to_image
+from data_handling import capture_data, data_to_image
+from calibration import set_calibration
 
-try:
-    system = PySpin.System.GetInstance()
-    cam_list = system.GetCameras()
-    num_cameras = cam_list.GetSize()
 
-    print(f"Number of cameras detected: {num_cameras}")
+async def main() -> None:
+    try:
+        system = PySpin.System.GetInstance()
+        cam_list = system.GetCameras()
+        num_cameras = cam_list.GetSize()
 
-    if num_cameras == 0:
-        print("No cameras detected. Exiting program.")
-        cam_list.Clear()
-        system.ReleaseInstance()
+        print(f"Number of cameras detected: {num_cameras}")
+
+        if num_cameras == 0:
+            print("No cameras detected. Exiting program.")
+            cam_list.Clear()
+            system.ReleaseInstance()
+            sys.exit(1)
+
+        cam = cam_list.GetByIndex(0)
+
+        # if set_calibration(cam=cam):
+        #     print("Calibration applied successfully")
+        # else:
+        #     print("Failed to apply calibration")
+
+        # Captures the image and saves it and its raw data as a matrix to data.txt
+        capture_task = asyncio.create_task(capture_data(cam=cam))
+        # Proccesses the raw data from data.txt and converts it to a image
+        image_task = asyncio.create_task(data_to_image())
+
+        await asyncio.gather(capture_task, image_task)
+
+    except Exception as e:
+        print(f"Error: {e}")
         sys.exit(1)
 
-    cam = cam_list.GetByIndex()
+    finally:
+        if cam is not None:
+            try:
+                cam.EndAcquisition()
+            except PySpin.SpinnakerException:
+                pass
 
-    # Captures the image and saves it and its raw data as a matrix to data.txt
-    asyncio.run(capture_data(cam=cam))
+            cam.DeInit()
+            del cam
 
-    # Proccesses the raw data from data.txt and converts it to a image
-    asyncio.run(data_to_image())
 
-    cam_list.Clear()
-    system.ReleaseInstance()
-except PySpin.SpinnakerException as ex:
-    print(f"Error: {ex}")
-    sys.exit(1)
+asyncio.run(main())

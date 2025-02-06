@@ -5,7 +5,7 @@ import os
 WORKING_DIRECTORY = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Raw data
-DATA_PATH = os.path.join(WORKING_DIRECTORY, "data", "raw_data", "data.txt")
+DATA_PATH = os.path.join(WORKING_DIRECTORY, "data", "raw_data", "raw_data.txt")
 
 # Images
 IMAGE_PATH = os.path.join(WORKING_DIRECTORY, "data", "images", "raw_image.jpg")
