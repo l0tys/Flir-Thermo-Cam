@@ -12,6 +12,8 @@ async def capture_data(cam, buffer=data_buffer):
     try:
         cam.Init()
         cam.BeginAcquisition()
+        # cam.Width = 640
+        # cam.Height = 512
 
         while True:
             try:
