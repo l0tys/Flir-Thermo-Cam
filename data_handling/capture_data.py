@@ -2,22 +2,18 @@
 import PySpin
 import numpy as np
 import asyncio
-import time
 
 # File imports
 from .data_buffer import data_buffer
 
 
-async def capture_data(cam, buffer=data_buffer):
+async def capture_data(cam, buffer=data_buffer) -> None:
     try:
         cam.Init()
         cam.BeginAcquisition()
-        # cam.Width = 640
-        # cam.Height = 512
 
         while True:
             try:
-                start_time = time.time()
                 image = cam.GetNextImage()
 
                 if image.IsIncomplete():
@@ -34,13 +30,8 @@ async def capture_data(cam, buffer=data_buffer):
                         image.GetHeight(), image.GetWidth())
 
                     buffer.add(np_image[1:])
-                    print("image added to the buffer")
 
                 image.Release()
-
-                end_time = time.time()
-                print(
-                    f"Data saving execution time: {end_time - start_time:.2f} seconds")
 
                 await asyncio.sleep(0)
 

@@ -16,5 +16,5 @@ class DataBuffer:
 data_buffer = DataBuffer()
 
 
-def get_buffered_data():
+def get_buffered_data() -> list:
     return data_buffer.export()

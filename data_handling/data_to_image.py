@@ -1,6 +1,5 @@
 # Library imports
 import asyncio
-import time
 import cv2
 import numpy as np
 
@@ -22,8 +21,6 @@ async def data_to_image() -> None:
 
     try:
         while True:
-            start_time = time.time()
-
             buffer = get_buffered_data()
 
             if not buffer:
@@ -57,10 +54,6 @@ async def data_to_image() -> None:
 
             if cv2.waitKey(1) == 27:
                 break
-
-            end_time = time.time()
-            print(
-                f"Data visualization execution time: {end_time - start_time:.2f} seconds")
 
             await asyncio.sleep(0)
 
