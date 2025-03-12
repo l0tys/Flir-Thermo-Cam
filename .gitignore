@@ -26,7 +26,7 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
-all_nodes.txt
+calibration/params/30_150_all_nodes_25mm.txt
 
 # PyInstaller
 #  Usually these files are written by a python script from a template

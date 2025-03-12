@@ -1,89 +1,74 @@
-# Library imports
 import PySpin
 
+def set_node_value(nodemap, node_name, value, node_type):
+    try:
+        node = node_type(nodemap.GetNode(node_name))
+        if PySpin.IsAvailable(node) and PySpin.IsWritable(node):
+            node.SetValue(value)
+        else:
+            print(f"{node_type}: {node_name} parameter not available or writable.")
+    except PySpin.SpinnakerException as e:
+        print(f"Spinnaker Exception ({node_name}): {e}")
 
-def set_calibration(cam) -> bool:
+def set_calibration(cam: PySpin.Camera) -> bool:
     try:
         cam.Init()
-
         nodemap = cam.GetNodeMap()
-        nodes = nodemap.GetNodes()
 
-        print(f"Nodemap: {nodemap}")
+        int_params = {
+            "Width": 640,
+            "Height": 513,
+            "OffsetX": 0,
+            "OffsetY": 0,
+        }
 
-        for node in nodes:
-            print(node)
+        float_params = {}
 
-        # Set Width
+        str_params = {
+            # "PS0CalibrationLoadTag": "25mm, Empty, 35C - 150C"
+        }
+
+        bool_params = {}
+
+        with open("calibration/params/cal_params.txt", "r") as param_file:
+            for line in param_file:
+                parts = line.strip().split(" ")
+                if len(parts) >= 3:
+                    data_type = parts[0]
+                    name = parts[1]
+                    value = " ".join(parts[2:])
+
+                    if data_type == "Integer":
+                        int_params[name] = int(value)
+                    elif data_type == "Float":
+                        float_params[name] = float(value)
+                    # elif data_type == "String":
+                    #     str_params[name] = value
+                    # elif data_type == "bool":
+                    #     bool_params[name] = bool(value)
+
+        for param, value in int_params.items():
+            set_node_value(nodemap=nodemap, node_name=param, value=value, node_type=PySpin.CIntegerPtr)
+        for param, value in float_params.items():
+            set_node_value(nodemap=nodemap, node_name=param, value=value, node_type=PySpin.CFloatPtr)
+        for param, value in str_params.items():
+            set_node_value(nodemap=nodemap, node_name=param, value=value, node_type=PySpin.CStringPtr)
+        for param, value in bool_params.items():
+            set_node_value(nodemap=nodemap, node_name=param, value=value, node_type=PySpin.CBooleanPtr)
+
         try:
-            width = PySpin.CIntegerPtr(nodemap.GetNode("Width"))
-            if PySpin.IsAvailable(width) and PySpin.IsWritable(width):
-                width.SetValue(640)
+            temperature_node = PySpin.CFloatPtr(nodemap.GetNode("DeviceTemperature"))
+            if PySpin.IsAvailable(temperature_node) and PySpin.IsReadable(temperature_node):
+                print(f"Camera Internal Temperature: {temperature_node.GetValue()} °C")
             else:
-                print("Width parameter not available or writable.")
+                print("Unable to read temperature.")
         except PySpin.SpinnakerException as e:
-            print(f"Spinnaker Exception: {e}")
-
-        # Set Height
-        try:
-            height = PySpin.CIntegerPtr(nodemap.GetNode("Height"))
-            if PySpin.IsAvailable(height) and PySpin.IsWritable(height):
-                height.SetValue(513)
-            else:
-                print("Height parameter not available or writable.")
-        except PySpin.SpinnakerException as e:
-            print(f"Spinnaker Exception: {e}")
-
-        # Set Offset X
-        try:
-            offset_x = PySpin.CIntegerPtr(nodemap.GetNode("OffsetX"))
-            if PySpin.IsAvailable(offset_x) and PySpin.IsWritable(offset_x):
-                offset_x.SetValue(0)
-            else:
-                print("OffsetX parameter not available or writable.")
-        except PySpin.SpinnakerException as e:
-            print(f"Spinnaker Exception: {e}")
-
-        # Set Offset Y
-        try:
-            offset_y = PySpin.CIntegerPtr(nodemap.GetNode("OffsetY"))
-            if PySpin.IsAvailable(offset_y) and PySpin.IsWritable(offset_y):
-                offset_y.SetValue(0)
-            else:
-                print("OffsetY parameter not available or writable.")
-        except PySpin.SpinnakerException as e:
-            print(f"Spinnaker Exception: {e}")
-
-        # Set the calibration tag
-        try:
-            set_calibration_tag = PySpin.CStringPtr(
-                nodemap.GetNode("PS0CalibrationLoadTag"))
-            if PySpin.IsReadable(set_calibration_tag):
-                print(f"Float: {set_calibration_tag.GetValue()}")
-                set_calibration_tag.SetValue("25mm, Empty, 35C - 150C")
-
-            print(set_calibration_tag.GetValue())
-
-        except PySpin.SpinnakerException as e:
-            print(f"Spinnaker Exception: {e}")
-
-        # Reads the camera tmperature
-        try:
-            camera_temperature = PySpin.CFloatPtr(
-                nodemap.GetNode("DeviceTemperature"))
-            if not PySpin.IsAvailable(camera_temperature) or not PySpin.IsReadable(camera_temperature):
-                print("Unable to read temperature. Aborting...")
-
-            temperature_value = camera_temperature.GetValue()
-            print(f"Camera Internal Temperature: {temperature_value} °C")
-        except PySpin.SpinnakerException as e:
-            print(f"Spinnaker Exception: {e}")
+            print(f"Spinnaker Exception (DeviceTemperature): {e}")
 
         cam.DeInit()
-
         cam.Init()
-
         print("Calibration parameters set successfully.")
+
         return True
     except PySpin.SpinnakerException as ex:
         print(f"Error: {ex}")
