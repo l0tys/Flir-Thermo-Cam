@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
 # * File imports
-from data_buffer import get_processed_buffered_data
+from data_buffer import get_processed_buffered_temp_data
 
 class DataAverage:
     def __init__(self):
@@ -39,10 +39,9 @@ class DataAverage:
 
         while self.is_running:
             try:
-                processed_buffer = get_processed_buffered_data()
-                point_list = processed_buffer
+                data_buffer = get_processed_buffered_temp_data()
 
-                if not point_list:
+                if not data_buffer:
                     await asyncio.sleep(0.1)
                     continue
 
@@ -51,12 +50,12 @@ class DataAverage:
                 current_time = datetime.datetime.now()
                 time_list.append(current_time)
 
-                np_points = np.array(point_list)
+                np_points = np.array(data_buffer)
                 np_seconds = np.array(time_list)
 
                 np_seconds = mdates.date2num(np_seconds)
 
-                self.ax.plot(np_seconds, np_points, color='black', linestyle='-', linewidth=3, label='Temperature °C')
+                self.ax.plot(np_points, color='black', linestyle='-', linewidth=3, label='Temperature °C')
                 self.ax.set_xlabel("Time (s)")
                 self.ax.set_ylabel("Temperature (T)")
                 self.ax.grid(True, linestyle='--', alpha=1)
