@@ -13,11 +13,7 @@ class ProcessedDataBuffer:
         self.time_buffer.append(time_data)
 
     def export_temp(self) -> list:
-        temp_buffer = np.array(list(self.temp_buffer))
-        if temp_buffer.ndim > 2:
-            temp_buffer = temp_buffer[0, :, :]
-
-        return temp_buffer
+        return list(self.temp_buffer)
 
 
     def export_time(self) -> list:

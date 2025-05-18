@@ -4,62 +4,53 @@ import cv2
 import numpy as np
 
 # * File imports
-from data_buffer import get_processed_buffered_temp_data
-from .color_map import create_thermal_colormap
-
+from data_buffer import get_raw_buffered_data, processed_data_buffer
 
 class DataToImage:
-    def __init__(self, data_buffer=None):
-        self.data_buffer = data_buffer or get_processed_buffered_temp_data()
+    def __init__(self, data_buffer=processed_data_buffer):
+        self.data_buffer = data_buffer
         self.current_position: tuple = (0, 0)
-
-        self.thermal_lut = create_thermal_colormap()
+        self.point_list = []
 
     def temp_hover(self, event, x, y, flags, param):
         if event == cv2.EVENT_MOUSEMOVE:
             self.current_position = (x, y)
 
-    async def data_to_image(self) -> None:
+    async def data_to_image(self, processed_buffer=processed_data_buffer) -> None:
         cv2.namedWindow("Camera Image")
         cv2.setMouseCallback("Camera Image", self.temp_hover)
 
         try:
             while True:
-                self.data_buffer = get_processed_buffered_temp_data()
+                raw_buffer = get_raw_buffered_data()
 
-                if not self.data_buffer:
+                if not raw_buffer:
                     print("Warning: No buffered data available.")
                     await asyncio.sleep(1)
                     continue
 
-                data_buffer = np.array(self.data_buffer)
+                data = raw_buffer[-1]
 
-                matrix_norm = cv2.normalize(data_buffer, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+                # matrix = 0.0107143 * data - 44.2857
+                matrix = 0.0130303 * data - 62.4242
+                matrix_norm = cv2.normalize(matrix, None, 0, 255, cv2.NORM_MINMAX)
 
-                if matrix_norm.size == 0:
+                if matrix_norm is None or matrix_norm.size == 0:
                     print("Warning: Normalized matrix is empty.")
                     await asyncio.sleep(1)
                     continue
 
-                try:
-                    color_input = cv2.cvtColor(matrix_norm, cv2.COLOR_GRAY2BGR)
-                    heatmap = cv2.LUT(color_input, self.thermal_lut)
-                except Exception as e:
-                    print(f"LUT failed, using fallback: {str(e)}")
-                    heatmap = cv2.applyColorMap(matrix_norm, cv2.COLORMAP_JET)
+                matrix_norm = np.uint8(matrix_norm)
+                heatmap = cv2.applyColorMap(matrix_norm, cv2.COLORMAP_JET)
 
                 overlay = heatmap.copy()
 
                 x, y = self.current_position
-                if (0 <= y < data_buffer.shape[0] and
-                        0 <= x < data_buffer.shape[1]):
-                    temp = data_buffer[y, x]
-
-                    cv2.putText(
-                        overlay, f"Temp: {temp:.2f}C", (10, 30),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.8,
-                        (255, 255, 255), 2, cv2.LINE_AA
-                    )
+                if 0 <= y < matrix.shape[0] and 0 <= x < matrix.shape[1]:
+                    temp = matrix[y, x]
+                    self.point_list.append(temp)
+                    cv2.putText(overlay, f"Temp: {temp:.2f} C", (10, 30),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2, cv2.LINE_AA)
 
                 cv2.imshow("Camera Image", overlay)
 
@@ -70,5 +61,6 @@ class DataToImage:
 
         except Exception as e:
             print(f"Error in data_to_image: {e}")
+
         finally:
             cv2.destroyAllWindows()

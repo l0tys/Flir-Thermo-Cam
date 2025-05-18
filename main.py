@@ -2,6 +2,12 @@
 import sys
 import asyncio
 import PySpin
+import matplotlib
+
+if sys.platform == 'darwin':
+    matplotlib.use('MacOSX')
+else:
+    matplotlib.use('TkAgg')
 
 # * File imports
 from calibration import set_calibration, get_all_nodes
@@ -50,9 +56,9 @@ class Camera:
             # Displays the average temperature in a chart
             data_average_task = asyncio.create_task(self.data_average.data_chart())
             # Displays the accumulated temperature in a chart
-            # data_cumulated_task = asyncio.create_task(self.data_cumulated.data_cumulated())
+            data_cumulated_task = asyncio.create_task(self.data_cumulated.data_cumulated())
 
-            await asyncio.gather(capture_task, process_task, image_task, data_average_task)
+            await asyncio.gather(capture_task, process_task, image_task, data_average_task, data_cumulated_task)
 
         except PySpin.SpinnakerException as ex:
             print(f"Spinnaker Exception: {ex}")
