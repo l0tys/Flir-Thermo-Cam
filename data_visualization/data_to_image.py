@@ -4,32 +4,43 @@ import cv2
 import numpy as np
 
 # * File imports
-from data_buffer import get_raw_buffered_data, processed_data_buffer
+from data_buffer import get_raw_buffered_data, get_processed_buffered_temp_data
+from data_handling import divide_into_quadrants, get_quadrant_statistics
+
 
 class DataToImage:
-    def __init__(self, data_buffer=processed_data_buffer):
-        self.data_buffer = data_buffer
-        self.current_position: tuple = (0, 0)
-        self.point_list = []
+    def __init__(self):
+        self.show_quadrants = True
+        self.show_stats = True
 
-    def temp_hover(self, event, x, y, flags, param):
-        if event == cv2.EVENT_MOUSEMOVE:
-            self.current_position = (x, y)
+    def draw_quadrant_lines(self, overlay, mid_row, mid_col):
+        height, width = overlay.shape[:2]
 
-    async def data_to_image(self, processed_buffer=processed_data_buffer) -> None:
-        cv2.namedWindow("Camera Image")
-        cv2.setMouseCallback("Camera Image", self.temp_hover)
+        cv2.line(overlay, (0, mid_row), (width, mid_row), (255, 255, 255), 2)
+        cv2.line(overlay, (mid_col, 0), (mid_col, height), (255, 255, 255), 2)
 
+        font = cv2.FONT_ITALIC
+        font_scale = 0.6
+        color = (255, 255, 255)
+        thickness = 2
+
+        cv2.putText(overlay, "Q1", (10, 25), font, font_scale, color, thickness)
+        cv2.putText(overlay, "Q2", (mid_col + 10, 25), font, font_scale, color, thickness)
+        cv2.putText(overlay, "Q3", (10, mid_row + 25), font, font_scale, color, thickness)
+        cv2.putText(overlay, "Q4", (mid_col + 10, mid_row + 25), font, font_scale, color, thickness)
+
+    async def data_to_image(self) -> None:
         try:
             while True:
-                raw_buffer = get_raw_buffered_data()
+                processed_buffer = get_processed_buffered_temp_data()
 
-                if not raw_buffer:
+                if not processed_buffer:
                     print("Warning: No buffered data available.")
                     await asyncio.sleep(1)
                     continue
 
-                data = raw_buffer[-1]
+                data = processed_buffer[-1]
+                # data = np.loadtxt("data/test_data/data.txt")
 
                 # matrix = 0.0107143 * data - 44.2857
                 matrix = 0.0130303 * data - 62.4242
@@ -45,14 +56,15 @@ class DataToImage:
 
                 overlay = heatmap.copy()
 
-                x, y = self.current_position
-                if 0 <= y < matrix.shape[0] and 0 <= x < matrix.shape[1]:
-                    temp = matrix[y, x]
-                    self.point_list.append(temp)
-                    cv2.putText(overlay, f"Temp: {temp:.2f} C", (10, 30),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2, cv2.LINE_AA)
+                quadrants = divide_into_quadrants(matrix)
+                q1, q2, q3, q4, mid_row, mid_col = quadrants
 
-                cv2.imshow("Camera Image", overlay)
+                get_quadrant_statistics(q1, q2, q3, q4)
+
+                if self.show_quadrants:
+                    self.draw_quadrant_lines(overlay, mid_row, mid_col)
+
+                cv2.imshow("Thermal Image", overlay)
 
                 if cv2.waitKey(1) == 27:
                     break
@@ -64,3 +76,4 @@ class DataToImage:
 
         finally:
             cv2.destroyAllWindows()
+            print("Thermal analysis stopped.")

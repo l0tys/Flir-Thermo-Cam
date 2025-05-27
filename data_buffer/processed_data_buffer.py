@@ -15,7 +15,6 @@ class ProcessedDataBuffer:
     def export_temp(self) -> list:
         return list(self.temp_buffer)
 
-
     def export_time(self) -> list:
         return list(self.time_buffer)
 
