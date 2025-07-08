@@ -13,7 +13,7 @@ class DataToImage:
         self.show_quadrants = True
         self.show_stats = True
 
-    def draw_quadrant_lines(self, overlay, mid_row, mid_col):
+    def draw_quadrant_lines(self, overlay, mid_row=255 , mid_col=320):
         height, width = overlay.shape[:2]
 
         cv2.line(overlay, (0, mid_row), (width, mid_row), (255, 255, 255), 2)
@@ -32,7 +32,7 @@ class DataToImage:
     async def data_to_image(self) -> None:
         try:
             while True:
-                processed_buffer = get_processed_buffered_temp_data()
+                processed_buffer = get_raw_buffered_data()
 
                 if not processed_buffer:
                     print("Warning: No buffered data available.")

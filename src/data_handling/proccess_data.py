@@ -24,8 +24,8 @@ class ProcessData:
                 data = self.raw_buffer[-1]
 
                 # data_matrix = 0.0107143 * data - 44.2857
-                # data_matrix = 0.0130303 * data - 62.4242
-                data_matrix = 0.0466667 * data - 49
+                # Bik precizak
+                data_matrix = 0.0130303 * data - 62.4242
 
                 current_time = datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S")
                 self.time_list.append(current_time)
