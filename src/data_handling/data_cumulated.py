@@ -5,7 +5,7 @@ from scipy.integrate import simpson
 from typing import Optional
 
 # * File imports
-from data_buffer import get_processed_buffered_temp_data
+from src.data_buffer import get_processed_buffered_temp_data
 
 
 class DataCumulated:

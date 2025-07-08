@@ -4,8 +4,8 @@ import cv2
 import numpy as np
 
 # * File imports
-from data_buffer import get_raw_buffered_data, get_processed_buffered_temp_data
-from data_handling import divide_into_quadrants, get_quadrant_statistics
+from src.data_buffer import get_raw_buffered_data
+from src.data_handling import divide_into_quadrants, get_quadrant_statistics
 
 
 class DataToImage:
