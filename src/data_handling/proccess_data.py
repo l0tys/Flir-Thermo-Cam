@@ -4,7 +4,7 @@ import numpy as np
 import datetime
 
 # * File imports
-from src.data_buffer import get_raw_buffered_data, processed_data_buffer
+from data_buffer import get_raw_buffered_data, processed_data_buffer
 
 class ProcessData:
     def __init__(self, raw_buffer=None, processed_buffer=None):

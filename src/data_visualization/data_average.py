@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # * File imports
-from src.data_buffer import get_processed_buffered_temp_data
+from data_buffer import get_processed_buffered_temp_data
 
 class DataAverage:
     def __init__(self):
