@@ -20,7 +20,7 @@ A real-time thermal imaging data acquisition, processing, and visualization syst
 - GigE Vision interface or compatible connection
 
 ### Software
-- Python 3.8+
+- Python 3.10
 - FLIR Spinnaker SDK with PySpin bindings
 - Dependencies:
   ```
@@ -28,6 +28,7 @@ A real-time thermal imaging data acquisition, processing, and visualization syst
   opencv-python
   matplotlib
   scipy
+  asyncio
   ```
 
 ## Installation
@@ -36,7 +37,7 @@ A real-time thermal imaging data acquisition, processing, and visualization syst
 
 2. Install Python dependencies:
    ```bash
-   pip install numpy opencv-python matplotlib scipy
+   pip install numpy opencv-python matplotlib scipy asyncio
    ```
 
 3. Clone this repository:
