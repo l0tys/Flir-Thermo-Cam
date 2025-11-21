@@ -1,8 +1,7 @@
-# Library imports
+# * Library imports
 from collections import deque
 import numpy as np
 
-# Raw data buffer
 class RawDataBuffer:
     def __init__(self, max_size: int = 10):
         self.buffer = deque(maxlen=max_size)

@@ -1,8 +1,7 @@
-# Library imports
+# * Library imports
 from collections import deque
 import numpy as np
 
-# Processed Data buffer
 class ProcessedDataBuffer:
     def __init__(self, max_size: int = 10):
         self.temp_buffer = deque(maxlen=max_size)

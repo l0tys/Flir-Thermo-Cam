@@ -1,7 +1,6 @@
 # Library imports
 import PySpin
 
-
 def get_all_nodes(cam: PySpin.Camera) -> bool:
     try:
         cam.Init()

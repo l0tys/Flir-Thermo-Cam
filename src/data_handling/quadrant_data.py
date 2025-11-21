@@ -1,3 +1,4 @@
+# * Library imports
 import numpy as np
 
 def divide_into_quadrants(matrix):

@@ -1,10 +1,10 @@
-# Library imports
+# * Library imports
 import PySpin
 import numpy as np
 import asyncio
 
-# File imports
-from data_buffer import raw_data_buffer
+# * File imports
+from ..data_buffer import raw_data_buffer
 
 class DataCapture:
     def __init__(self, camera: PySpin.Camera, data_buffer = raw_data_buffer):

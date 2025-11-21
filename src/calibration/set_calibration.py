@@ -30,7 +30,7 @@ def set_calibration(cam: PySpin.Camera) -> bool:
 
         bool_params = {}
 
-        with open("calibration/params/cal_params.txt", "r") as param_file:
+        with open("src/calibration/params/cal_params.txt", "r") as param_file:
             for line in param_file:
                 parts = line.strip().split(" ")
                 if len(parts) >= 3:
