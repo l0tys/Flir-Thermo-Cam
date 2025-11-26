@@ -3,9 +3,12 @@ import asyncio
 import cv2
 import numpy as np
 from typing import List, Tuple, Optional
+from pathlib import Path
+from datetime import datetime
+import struct
 
 # * File imports
-from ..data_buffer import get_raw_buffered_data, get_processed_buffered_temp_data, polygon_data_buffer
+from ..data_buffer import get_processed_buffered_temp_data, polygon_data_buffer
 from ..data_handling import divide_into_quadrants, get_quadrant_statistics
 
 
@@ -18,12 +21,20 @@ class DataToImage:
         self.min_points = 4
         self.max_points = 10
         self.current_matrix = None
-        self.current_processed_data = None  # Store processed temperature data
-        self.heatmap_scale = (640, 512)  # Display size
-        self.point_radius = 10  # Click detection radius
+        self.current_processed_data = None
+        self.heatmap_scale = (640, 512)
+        self.point_radius = 10
+        self.output_dir = Path("./data/exports")
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+
+        # Recording state
+        self.is_recording = False
+        self.recording_file = None
+        self.recording_handle = None
+        self.frame_count = 0
+        self.recording_task = None
 
     def find_nearest_point(self, x, y) -> Optional[int]:
-        """Find the nearest point within click radius"""
         min_dist = float('inf')
         nearest_idx = None
 
@@ -36,9 +47,7 @@ class DataToImage:
         return nearest_idx
 
     def mouse_callback(self, event, x, y, flags, param):
-        """Handle mouse clicks for polygon point selection and removal"""
         if self.polygon_mode:
-            # Left click - Add point
             if event == cv2.EVENT_LBUTTONDOWN:
                 if len(self.polygon_points) < self.max_points:
                     self.polygon_points.append((x, y))
@@ -46,7 +55,6 @@ class DataToImage:
                 else:
                     print(f"Maximum {self.max_points} points reached!")
 
-            # Right click - Remove nearest point
             elif event == cv2.EVENT_RBUTTONDOWN:
                 nearest_idx = self.find_nearest_point(x, y)
                 if nearest_idx is not None:
@@ -57,77 +65,114 @@ class DataToImage:
                     print("No point nearby to remove")
 
     def draw_polygon(self, overlay):
-        """Draw the polygon and points on the overlay"""
         if len(self.polygon_points) > 0:
-            # Draw points with larger hover detection area
             for i, point in enumerate(self.polygon_points):
-                # Draw hover area (semi-transparent)
                 temp_overlay = overlay.copy()
                 cv2.circle(temp_overlay, point, self.point_radius, (100, 100, 100), 1)
                 cv2.addWeighted(temp_overlay, 0.3, overlay, 0.7, 0, overlay)
 
-                # Draw actual point
                 cv2.circle(overlay, point, 5, (0, 255, 0), -1)
                 cv2.putText(overlay, str(i + 1), (point[0] + 10, point[1] - 10),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
-            # Draw lines connecting points
             if len(self.polygon_points) > 1:
                 pts = np.array(self.polygon_points, np.int32)
                 pts = pts.reshape((-1, 1, 2))
                 cv2.polylines(overlay, [pts], isClosed=True, color=(0, 255, 0), thickness=2)
 
-    def get_data_points_in_polygon(self, processed_data: np.ndarray) -> np.ndarray:
-        """
-        Extract processed temperature data point values that fall within the polygon region
-        Returns: array of temperature values
-        """
+    def get_polygon_matrix(self, processed_data: np.ndarray) -> np.ndarray:
+        # If no polygon defined, return entire matrix
         if len(self.polygon_points) < self.min_points:
-            return np.array([])
+            return processed_data
 
         rows, cols = processed_data.shape
 
-        # Scale polygon points from display size to matrix size
         scale_x = cols / self.heatmap_scale[0]
         scale_y = rows / self.heatmap_scale[1]
 
         scaled_points = [(int(x * scale_x), int(y * scale_y))
                          for x, y in self.polygon_points]
 
-        # Create mask for the polygon region
         mask = np.zeros((rows, cols), dtype=np.uint8)
         pts = np.array(scaled_points, np.int32)
         cv2.fillPoly(mask, [pts], 1)
 
-        # Get processed temperature values of points inside polygon
-        temp_values = processed_data[mask == 1]
+        output_matrix = np.where(mask == 1, processed_data, np.nan)
 
-        return temp_values
+        return output_matrix
 
-    def print_polygon_data(self, processed_data: np.ndarray):
-        """Print processed temperature data point values within polygon to console"""
-        values = self.get_data_points_in_polygon(processed_data)
-
-        if len(values) == 0:
-            print("No data points in polygon region")
+    def start_recording(self):
+        if self.is_recording:
+            print("Already recording!")
             return
 
-        print(f"\n{len(values)} data points:")
-        print(values)
-        print()
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        self.recording_file = self.output_dir / f"thermal_recording_{timestamp}.bin"
+        self.recording_handle = open(self.recording_file, 'wb')
+        self.is_recording = True
+        self.frame_count = 0
 
-    def export_polygon_data(self, processed_data: np.ndarray, filename: str = "polygon_data.txt"):
-        """Export processed temperature data point values within polygon to a file"""
-        values = self.get_data_points_in_polygon(processed_data)
+        # Write file header with magic number for validation
+        self.recording_handle.write(b'THRM')  # Magic number
+        self.recording_handle.write(struct.pack('i', 1))  # Version number
 
-        if len(values) == 0:
-            print("No data points in polygon region")
+        if len(self.polygon_points) < self.min_points:
+            print(f"Started recording FULL FRAME to: {self.recording_file}")
+        else:
+            print(f"Started recording POLYGON REGION to: {self.recording_file}")
+
+    def stop_recording(self):
+        """Stop recording polygon data"""
+        if not self.is_recording:
+            print("Not recording!")
             return
 
-        # Save to file - just the values
-        np.savetxt(filename, values, fmt='%.4f')
+        self.is_recording = False
+        if self.recording_handle:
+            self.recording_handle.close()
+            self.recording_handle = None
 
-        print(f"\n{len(values)} data points exported to {filename}\n")
+        print(f"Recording stopped. {self.frame_count} frames saved to: {self.recording_file}")
+
+    def write_frame(self, matrix_data):
+        if not self.is_recording or not self.recording_handle:
+            return
+
+        try:
+            # Frame divider: magic bytes
+            self.recording_handle.write(b'FRAM')  # Frame marker
+
+            # Write frame metadata
+            self.recording_handle.write(struct.pack('i', len(matrix_data.shape)))  # num dimensions
+            for dim in matrix_data.shape:
+                self.recording_handle.write(struct.pack('i', dim))  # shape
+
+            # Write timestamp
+            timestamp_val = datetime.now().timestamp()
+            self.recording_handle.write(struct.pack('d', timestamp_val))
+
+            # Write frame number
+            self.recording_handle.write(struct.pack('i', self.frame_count))
+
+            # Write data as binary
+            matrix_data.astype(np.float64).tofile(self.recording_handle)
+            self.recording_handle.flush()
+
+            self.frame_count += 1
+            print(f"Frame {self.frame_count} written")
+
+        except Exception as e:
+            print(f"Error writing frame: {e}")
+
+    async def recording_loop(self):
+        """Background task that records frames every 1 second"""
+        while self.is_recording:
+            if self.current_processed_data is not None:
+                matrix_to_record = self.get_polygon_matrix(self.current_processed_data)
+                if matrix_to_record.size > 0:
+                    self.write_frame(matrix_to_record)
+
+            await asyncio.sleep(1.0)  # Record every 1 second
 
     def draw_quadrant_lines(self, overlay, mid_row=255, mid_col=320):
         height, width = overlay.shape[:2]
@@ -150,6 +195,17 @@ class DataToImage:
             cv2.namedWindow("Thermal Image")
             cv2.setMouseCallback("Thermal Image", self.mouse_callback)
 
+            print("\nControls:")
+            print("  'p' - Toggle polygon mode")
+            print("  LEFT CLICK - Add point (in polygon mode)")
+            print("  RIGHT CLICK - Remove nearest point (in polygon mode)")
+            print("  'c' - Clear all points")
+            print("  'u' - Undo last point")
+            print("  'r' - Start/Stop recording (1 second intervals)")
+            print("  'q' - Toggle quadrant view")
+            print("  ESC - Exit")
+            print("\nNote: Recording without polygon will capture FULL FRAME\n")
+
             while True:
                 processed_buffer = get_processed_buffered_temp_data()
 
@@ -160,15 +216,13 @@ class DataToImage:
 
                 matrix = processed_buffer[-1]
 
-                # Store processed temperature data
                 self.current_processed_data = matrix
                 self.current_matrix = matrix
 
-                # ALWAYS update polygon buffer if polygon is valid
-                if len(self.polygon_points) >= self.min_points:
-                    values = self.get_data_points_in_polygon(self.current_processed_data)
-                    if len(values) > 0:
-                        polygon_data_buffer.add(values)
+                # Update polygon buffer
+                matrix_to_buffer = self.get_polygon_matrix(self.current_processed_data)
+                if matrix_to_buffer.size > 0:
+                    polygon_data_buffer.add(matrix_to_buffer)
 
                 matrix_norm = cv2.normalize(matrix, None, 0, 255, cv2.NORM_MINMAX)
 
@@ -180,7 +234,6 @@ class DataToImage:
                 matrix_norm = np.uint8(matrix_norm)
                 heatmap = cv2.applyColorMap(matrix_norm, cv2.COLORMAP_JET)
 
-                # Resize for display
                 heatmap = cv2.resize(heatmap, self.heatmap_scale)
                 overlay = heatmap.copy()
 
@@ -190,7 +243,6 @@ class DataToImage:
                     q1, q2, q3, q4, mid_row, mid_col = quadrants
                     get_quadrant_statistics(q1, q2, q3, q4)
 
-                    # Scale quadrant lines to display size
                     scale_x = self.heatmap_scale[0] / matrix.shape[1]
                     scale_y = self.heatmap_scale[1] / matrix.shape[0]
                     display_mid_row = int(mid_row * scale_y)
@@ -208,30 +260,49 @@ class DataToImage:
                     cv2.putText(overlay, mode_text, (10, overlay.shape[0] - 10),
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
 
-                    # Show instructions
                     instructions = "L-Click: Add | R-Click: Remove"
                     cv2.putText(overlay, instructions, (10, overlay.shape[0] - 35),
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+
+                # Show recording indicator
+                if self.is_recording:
+                    if len(self.polygon_points) < self.min_points:
+                        rec_text = f"REC FULL - Frame {self.frame_count}"
+                    else:
+                        rec_text = f"REC POLYGON - Frame {self.frame_count}"
+                    cv2.circle(overlay, (overlay.shape[1] - 30, 30), 10, (0, 0, 255), -1)
+                    cv2.putText(overlay, rec_text, (overlay.shape[1] - 280, 35),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
 
                 cv2.imshow("Thermal Image", overlay)
 
                 key = cv2.waitKey(1) & 0xFF
 
                 if key == 27:  # ESC
+                    if self.is_recording:
+                        self.stop_recording()
                     break
-                elif key == ord('p'):  # Toggle polygon mode
+                elif key == ord('p'):
                     self.polygon_mode = not self.polygon_mode
                     print(f"Polygon mode: {'ON' if self.polygon_mode else 'OFF'}")
-                elif key == ord('c'):  # Clear all points
+                elif key == ord('c'):
                     self.polygon_points.clear()
                     print("All polygon points cleared")
-                elif key == ord('u'):  # Undo last point
+                elif key == ord('u'):
                     if len(self.polygon_points) > 0:
                         removed = self.polygon_points.pop()
                         print(f"Last point removed: {removed}")
                     else:
                         print("No points to undo")
-                elif key == ord('q'):  # Toggle quadrants
+                elif key == ord('r'):
+                    if not self.is_recording:
+                        self.start_recording()
+                        self.recording_task = asyncio.create_task(self.recording_loop())
+                    else:
+                        self.stop_recording()
+                        if self.recording_task:
+                            self.recording_task.cancel()
+                elif key == ord('q'):
                     self.show_quadrants = not self.show_quadrants
                     print(f"Quadrants: {'ON' if self.show_quadrants else 'OFF'}")
 
@@ -239,7 +310,11 @@ class DataToImage:
 
         except Exception as e:
             print(f"Error in data_to_image: {e}")
+            import traceback
+            traceback.print_exc()
 
         finally:
+            if self.is_recording:
+                self.stop_recording()
             cv2.destroyAllWindows()
             print("Thermal analysis stopped.")

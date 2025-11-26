@@ -1,0 +1,69 @@
+Binary File: test_exports/thermal_recording_20251127_005052.bin
+Total Frames: 8
+Version: 1
+======================================================================
+
+Frame 0:
+  File: frame_0000.txt
+  Timestamp: 1764197452.455526 (2025-11-27 00:50:52)
+  Shape: (512, 640)
+  Min: 1519.0000
+  Max: 1800.0000
+  Mean: 1660.4319
+
+Frame 1:
+  File: frame_0001.txt
+  Timestamp: 1764197453.498315 (2025-11-27 00:50:53)
+  Shape: (512, 640)
+  Min: 1519.0000
+  Max: 1800.0000
+  Mean: 1660.4319
+
+Frame 2:
+  File: frame_0002.txt
+  Timestamp: 1764197454.510184 (2025-11-27 00:50:54)
+  Shape: (512, 640)
+  Min: 1519.0000
+  Max: 1800.0000
+  Mean: 1660.4319
+
+Frame 3:
+  File: frame_0003.txt
+  Timestamp: 1764197455.522617 (2025-11-27 00:50:55)
+  Shape: (512, 640)
+  Min: 1519.0000
+  Max: 1800.0000
+  Mean: 1660.4319
+
+Frame 4:
+  File: frame_0004.txt
+  Timestamp: 1764197456.537521 (2025-11-27 00:50:56)
+  Shape: (512, 640)
+  Min: 1519.0000
+  Max: 1800.0000
+  Mean: 1660.4319
+
+Frame 5:
+  File: frame_0005.txt
+  Timestamp: 1764197457.554064 (2025-11-27 00:50:57)
+  Shape: (512, 640)
+  Min: 1519.0000
+  Max: 1800.0000
+  Mean: 1660.4319
+
+Frame 6:
+  File: frame_0006.txt
+  Timestamp: 1764197458.569775 (2025-11-27 00:50:58)
+  Shape: (512, 640)
+  Min: 1519.0000
+  Max: 1800.0000
+  Mean: 1660.4319
+
+Frame 7:
+  File: frame_0007.txt
+  Timestamp: 1764197459.612328 (2025-11-27 00:50:59)
+  Shape: (512, 640)
+  Min: 1519.0000
+  Max: 1800.0000
+  Mean: 1660.4319
+

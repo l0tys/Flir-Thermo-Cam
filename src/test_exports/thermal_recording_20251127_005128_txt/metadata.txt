@@ -1,0 +1,125 @@
+Binary File: test_exports/thermal_recording_20251127_005128.bin
+Total Frames: 15
+Version: 1
+======================================================================
+
+Frame 0:
+  File: frame_0000.txt
+  Timestamp: 1764197488.838604 (2025-11-27 00:51:28)
+  Shape: (512, 640)
+  Min: 1519.0000
+  Max: 1800.0000
+  Mean: 1660.4319
+
+Frame 1:
+  File: frame_0001.txt
+  Timestamp: 1764197489.883953 (2025-11-27 00:51:29)
+  Shape: (512, 640)
+  Min: 1519.0000
+  Max: 1800.0000
+  Mean: 1660.4319
+
+Frame 2:
+  File: frame_0002.txt
+  Timestamp: 1764197490.923285 (2025-11-27 00:51:30)
+  Shape: (512, 640)
+  Min: 1519.0000
+  Max: 1800.0000
+  Mean: 1660.4319
+
+Frame 3:
+  File: frame_0003.txt
+  Timestamp: 1764197491.939249 (2025-11-27 00:51:31)
+  Shape: (512, 640)
+  Min: 1519.0000
+  Max: 1800.0000
+  Mean: 1660.4319
+
+Frame 4:
+  File: frame_0004.txt
+  Timestamp: 1764197492.950457 (2025-11-27 00:51:32)
+  Shape: (512, 640)
+  Min: 1519.0000
+  Max: 1800.0000
+  Mean: 1660.4319
+
+Frame 5:
+  File: frame_0005.txt
+  Timestamp: 1764197493.956493 (2025-11-27 00:51:33)
+  Shape: (512, 640)
+  Min: 1519.0000
+  Max: 1800.0000
+  Mean: 1660.4319
+
+Frame 6:
+  File: frame_0006.txt
+  Timestamp: 1764197494.971669 (2025-11-27 00:51:34)
+  Shape: (512, 640)
+  Min: 1519.0000
+  Max: 1800.0000
+  Mean: 1660.4319
+
+Frame 7:
+  File: frame_0007.txt
+  Timestamp: 1764197496.01833 (2025-11-27 00:51:36)
+  Shape: (512, 640)
+  Min: 1519.0000
+  Max: 1800.0000
+  Mean: 1660.4319
+
+Frame 8:
+  File: frame_0008.txt
+  Timestamp: 1764197497.021174 (2025-11-27 00:51:37)
+  Shape: (512, 640)
+  Min: 1519.0000
+  Max: 1800.0000
+  Mean: 1660.4319
+
+Frame 9:
+  File: frame_0009.txt
+  Timestamp: 1764197498.032454 (2025-11-27 00:51:38)
+  Shape: (512, 640)
+  Min: 1519.0000
+  Max: 1800.0000
+  Mean: 1660.4319
+
+Frame 10:
+  File: frame_0010.txt
+  Timestamp: 1764197499.059688 (2025-11-27 00:51:39)
+  Shape: (512, 640)
+  Min: 1519.0000
+  Max: 1800.0000
+  Mean: 1660.4319
+
+Frame 11:
+  File: frame_0011.txt
+  Timestamp: 1764197500.116609 (2025-11-27 00:51:40)
+  Shape: (512, 640)
+  Min: 1519.0000
+  Max: 1800.0000
+  Mean: 1660.4319
+
+Frame 12:
+  File: frame_0012.txt
+  Timestamp: 1764197501.134696 (2025-11-27 00:51:41)
+  Shape: (512, 640)
+  Min: 1519.0000
+  Max: 1800.0000
+  Mean: 1660.4319
+
+Frame 13:
+  File: frame_0013.txt
+  Timestamp: 1764197502.176329 (2025-11-27 00:51:42)
+  Shape: (512, 640)
+  Min: 1519.0000
+  Max: 1800.0000
+  Mean: 1660.4319
+
+Frame 14:
+  File: frame_0014.txt
+  Timestamp: 1764197503.223027 (2025-11-27 00:51:43)
+  Shape: (512, 640)
+  Min: 1519.0000
+  Max: 1800.0000
+  Mean: 1660.4319
+
