@@ -27,7 +27,7 @@ class Camera:
         self.data_process = ProcessData()
         self.data_average = DataAverage()
         self.data_cumulated = DataCumulated()
-        self.data_export = DataExport(output_dir="./data_exports", file_prefix="sensor_data")
+        self.data_export = DataExport()
 
     async def main(self):
         try:
@@ -55,7 +55,7 @@ class Camera:
             # Processes the raw data and converts it to an image
             image_task = asyncio.create_task(self.data_image.data_to_image())
             # Exports recorded data
-            export_task = asyncio.create_task(self.data_export.data_export())
+            export_task = asyncio.create_task(self.data_export.start_export(update_interval=1.00))
             # Displays the average temperature in a chart
             # data_average_task = asyncio.create_task(self.data_average.data_chart())
             # Displays the accumulated temperature in a chart

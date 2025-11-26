@@ -3,48 +3,34 @@ import asyncio
 import numpy as np
 from pathlib import Path
 from datetime import datetime
-import struct
 
 # * File imports
-from ..data_buffer import get_processed_buffered_temp_data
+from ..data_buffer import get_polygon_buffered_data
 
 
 class DataExport:
-    def __init__(self, output_dir="./data_exports", file_prefix="data_export"):
+    def __init__(self, output_dir="./data/exports", file_prefix="polygon_data"):
         """
-        Initialize DataExport with output directory and file naming options.
+        Initialize PolygonDataExport with output directory and file naming options.
 
         Args:
-            output_dir: Directory where binary files will be saved
+            output_dir: Directory where text files will be saved
             file_prefix: Prefix for generated filenames
         """
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.file_prefix = file_prefix
         self.current_file = None
-        self.file_handle = None
         self.is_exporting = False
 
     def _generate_filename(self):
         """Generate a unique filename with timestamp."""
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        return self.output_dir / f"{self.file_prefix}_{timestamp}.bin"
-
-    def _write_metadata(self, data_shape):
-        """
-        Write metadata header to the file.
-        Format: [num_dimensions (int32), dim1 (int32), dim2 (int32), ...]
-        """
-        if self.file_handle:
-            # Write number of dimensions
-            self.file_handle.write(struct.pack('i', len(data_shape)))
-            # Write each dimension size
-            for dim in data_shape:
-                self.file_handle.write(struct.pack('i', dim))
+        return self.output_dir / f"{self.file_prefix}_{timestamp}.txt"
 
     async def start_export(self, update_interval=1.0):
         """
-        Start continuous data export process.
+        Start continuous polygon data export process.
 
         Args:
             update_interval: Time in seconds between data buffer reads
@@ -55,51 +41,66 @@ class DataExport:
 
         self.is_exporting = True
         self.current_file = self._generate_filename()
-        self.file_handle = open(self.current_file, 'wb')
 
-        print(f"Started data export to: {self.current_file}")
-
-        first_write = True
+        print(f"Started polygon data export to: {self.current_file}")
 
         try:
             while self.is_exporting:
-                # Get current data from buffer
-                data = get_processed_buffered_temp_data()
+                # Get current data from polygon buffer
+                buffered_data = get_polygon_buffered_data()
 
-                if data is not None:
-                    # Convert to numpy array if not already
-                    if not isinstance(data, np.ndarray):
-                        data = np.asarray(data)
+                if buffered_data and len(buffered_data) > 0:
+                    # Get the last frame (matrix)
+                    matrix_data = buffered_data[-1]
 
-                    # Write metadata on first write
-                    if first_write:
-                        self._write_metadata(data.shape)
-                        first_write = False
+                    # Write matrix to file
+                    await asyncio.get_event_loop().run_in_executor(
+                        None,
+                        lambda: np.savetxt(self.current_file, matrix_data, fmt='%.4f')
+                    )
 
-                    # Write timestamp
-                    timestamp = datetime.now().timestamp()
-                    self.file_handle.write(struct.pack('d', timestamp))
-
-                    # Write data as binary (assumes float64/double)
-                    data.astype(np.float64).tofile(self.file_handle)
-                    self.file_handle.flush()  # Ensure data is written
+                    print(f"Exported matrix with shape {matrix_data.shape}")
 
                 await asyncio.sleep(update_interval)
 
         except Exception as e:
             print(f"Error during export: {e}")
+            import traceback
+            traceback.print_exc()
         finally:
-            if self.file_handle:
-                self.file_handle.close()
-                print(f"Export stopped. Data saved to: {self.current_file}")
+            print(f"Export stopped. Data saved to: {self.current_file}")
 
     def stop_export(self):
         """Stop the continuous export process."""
         self.is_exporting = False
 
-    async def data_export(self, duration=None, update_interval=1.0):
+    async def export_once(self):
         """
-        Export data for a specific duration or indefinitely.
+        Export polygon buffer data once to a new file.
+        """
+        buffered_data = get_polygon_buffered_data()
+
+        if not buffered_data or len(buffered_data) == 0:
+            print("No polygon data in buffer to export")
+            return None
+
+        filename = self._generate_filename()
+
+        # Get the last frame (matrix)
+        matrix_data = buffered_data[-1]
+
+        # Save matrix to file
+        await asyncio.get_event_loop().run_in_executor(
+            None,
+            lambda: np.savetxt(filename, matrix_data, fmt='%.4f')
+        )
+
+        print(f"Exported matrix with shape {matrix_data.shape} to {filename}")
+        return str(filename)
+
+    async def polygon_data_export(self, duration=None, update_interval=1.0):
+        """
+        Export polygon data for a specific duration or indefinitely.
 
         Args:
             duration: Export duration in seconds (None for indefinite)
@@ -112,3 +113,10 @@ class DataExport:
             self.stop_export()
 
         await export_task
+
+
+# Convenience function for one-time export
+async def export_polygon_data_once():
+    """Quick function to export polygon buffer once"""
+    exporter = DataExport()
+    return await exporter.export_once()
